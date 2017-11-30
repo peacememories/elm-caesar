@@ -2,8 +2,10 @@ module Main exposing (main)
 
 import Html exposing (Html)
 import Html.Attributes
+import Html.Events
 import Element exposing (..)
 import Element.Input exposing (..)
+import Element.Attributes exposing (..)
 import Style exposing (StyleSheet)
 import String
 import Char
@@ -88,14 +90,27 @@ mainLayout model =
             , options = []
             }
         , Element.text (caesarCipher model.offset model.ciphertext)
-        , range () OffsetChanged model.offset
+        , row () [] [ range () OffsetChanged model.offset ]
         ]
+        |> el () [ center, minWidth (percent 300) ]
 
 
 range : style -> (Int -> msg) -> Int -> Element style variation msg
 range style tag value =
     html <|
-        Html.input [ Html.Attributes.type_ "range" ] []
+        Html.input
+            [ Html.Attributes.type_ "range"
+            , Html.Attributes.value (toString value)
+            , Html.Events.onInput
+                (\text ->
+                    String.toInt text
+                        |> Result.withDefault value
+                        |> tag
+                )
+            , Html.Attributes.attribute "min" "0"
+            , Html.Attributes.attribute "max" "26"
+            ]
+            []
 
 
 
@@ -104,14 +119,30 @@ range style tag value =
 --
 
 
+encrypt : Int -> Int -> Int -> Int
+encrypt offset base value =
+    (value + offset - base) % 26 + base
+
+
+encryptChar : Int -> Char -> Char
+encryptChar offset char =
+    case ( Char.isUpper char, Char.isLower char ) of
+        ( True, _ ) ->
+            Char.toCode char
+                |> encrypt offset (Char.toCode 'A')
+                |> Char.fromCode
+
+        ( _, True ) ->
+            Char.toCode char
+                |> encrypt offset (Char.toCode 'a')
+                |> Char.fromCode
+
+        _ ->
+            char
+
+
 caesarCipher : Int -> String -> String
 caesarCipher offset text =
-    let
-        cipher char =
-            Char.toCode char
-                |> (+) offset
-                |> Char.fromCode
-    in
-        String.toList text
-            |> List.map cipher
-            |> String.fromList
+    String.toList text
+        |> List.map (encryptChar offset)
+        |> String.fromList
