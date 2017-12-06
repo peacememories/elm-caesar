@@ -153,14 +153,20 @@ pageContent model =
             [ height <| fillPortion 1 ]
             [ Element.text <| caesarCipher model.offset model.ciphertext
             ]
-        , range OffsetChanged model.offset
+        , row None
+            [ spacing 10 ]
+            [ Element.text (toString model.offset)
+                |> el None [ alignRight ]
+                |> el Label [ minWidth <| px 30 ]
+            , range None [ width fill ] OffsetChanged model.offset
+            ]
         ]
         |> mainContent Body [ height fill, padding 20, center ]
 
 
-range : (Int -> msg) -> Int -> Element Styles variation msg
-range tag value =
-    el None [] <|
+range : style -> List (Element.Attribute variation msg) -> (Int -> msg) -> Int -> Element style variation msg
+range style attrs tag value =
+    el style attrs <|
         html <|
             Html.input
                 [ Html.Attributes.type_ "range"
@@ -168,6 +174,7 @@ range tag value =
                 , Html.Attributes.style
                     [ ( "box-sizing", "border-box" )
                     , ( "width", "100%" )
+                    , ( "height", "100%" )
                     , ( "margin", "0" )
                     , ( "outline", "none" )
                     , ( "border-color", "rgba(155,203,255,1.0)" )
@@ -180,7 +187,7 @@ range tag value =
                             |> tag
                     )
                 , Html.Attributes.attribute "min" "0"
-                , Html.Attributes.attribute "max" "26"
+                , Html.Attributes.attribute "max" "25"
                 ]
                 []
 
