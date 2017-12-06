@@ -6,7 +6,10 @@ import Html.Events
 import Element exposing (..)
 import Element.Input exposing (..)
 import Element.Attributes exposing (..)
-import Style exposing (StyleSheet)
+import Color exposing (..)
+import Style exposing (..)
+import Style.Color as Color
+import Style.Font as Font
 import String
 import Char
 
@@ -68,39 +71,86 @@ initModel =
 --
 
 
-styleSheet : StyleSheet elem variation
-styleSheet =
-    Style.styleSheet []
+type Styles
+    = None
+    | Header
+    | Body
+    | Page
+
+
+globalSheet : StyleSheet Styles variation
+globalSheet =
+    styleSheet
+        [ style None []
+        , style Header
+            [ Color.background darkCharcoal
+            , Color.text white
+            , Font.typeface [ Font.sansSerif ]
+            , Font.size 40
+            , Font.lineHeight 1.5
+            ]
+        , style Page
+            [ Color.background darkGray
+            ]
+        ]
 
 
 view : Model -> Html Msg
 view model =
-    layout styleSheet (mainLayout model)
+    viewport globalSheet (mainLayout model)
 
 
-mainLayout : Model -> Element () variation Msg
+mainLayout : Model -> Element Styles variation Msg
 mainLayout model =
-    column ()
-        []
-        [ multiline ()
+    column Page
+        [ height fill ]
+        [ pageHeader
+        , pageContent model
+        ]
+
+
+pageHeader : Element Styles variation msg
+pageHeader =
+    row None
+        [ center, width fill ]
+        [ Element.text "Caesar Cipher"
+            |> h1 None []
+        ]
+        |> header Header []
+
+
+pageContent : Model -> Element Styles variation Msg
+pageContent model =
+    column None
+        [ spacing 20 ]
+        [ multiline None
             []
             { onChange = CiphertextChanged
-            , value = ""
-            , label = labelAbove <| Element.text "Ciphertext"
+            , value = model.ciphertext
+            , label = labelAbove <| Element.text "Ciphertext:"
             , options = []
             }
-        , Element.text (caesarCipher model.offset model.ciphertext)
-        , row () [] [ range () OffsetChanged model.offset ]
+        , Element.text <| caesarCipher model.offset model.ciphertext
+        , range OffsetChanged model.offset
         ]
-        |> el () [ center, minWidth (percent 300) ]
+        |> mainContent Body [ height fill, padding 20, center ]
 
 
-range : style -> (Int -> msg) -> Int -> Element style variation msg
-range style tag value =
+range : (Int -> msg) -> Int -> Element style variation msg
+range tag value =
     html <|
         Html.input
             [ Html.Attributes.type_ "range"
             , Html.Attributes.value (toString value)
+            , Html.Attributes.style
+                [ ( "box-sizing", "border-box" )
+                , ( "width", "100%" )
+                , ( "margin", "0" )
+                , ( "outline", "none" )
+                , ( "border-color", "rgba(155,203,255,1.0)" )
+                , ( "padding", "10px" )
+                , ( "pointer-events", "auto" )
+                ]
             , Html.Events.onInput
                 (\text ->
                     String.toInt text
