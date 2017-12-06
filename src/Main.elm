@@ -76,6 +76,8 @@ type Styles
     | Header
     | Body
     | Page
+    | TextField
+    | Label
 
 
 globalSheet : StyleSheet Styles variation
@@ -87,10 +89,20 @@ globalSheet =
             , Color.text white
             , Font.typeface [ Font.sansSerif ]
             , Font.size 40
-            , Font.lineHeight 1.5
             ]
         , style Page
             [ Color.background darkGray
+            ]
+        , style TextField
+            [ Color.background darkCharcoal
+            , Color.text white
+            , Font.typeface [ Font.sansSerif ]
+            , Font.size 20
+            ]
+        , style Label
+            [ Font.typeface [ Font.sansSerif ]
+            , Font.size 20
+            , Color.text darkCharcoal
             ]
         ]
 
@@ -112,7 +124,11 @@ mainLayout model =
 pageHeader : Element Styles variation msg
 pageHeader =
     row None
-        [ center, width fill ]
+        [ center
+        , width fill
+        , verticalCenter
+        , height (px 60)
+        ]
         [ Element.text "Caesar Cipher"
             |> h1 None []
         ]
@@ -122,45 +138,51 @@ pageHeader =
 pageContent : Model -> Element Styles variation Msg
 pageContent model =
     column None
-        [ spacing 20 ]
-        [ multiline None
-            []
-            { onChange = CiphertextChanged
-            , value = model.ciphertext
-            , label = labelAbove <| Element.text "Ciphertext:"
-            , options = []
-            }
-        , Element.text <| caesarCipher model.offset model.ciphertext
+        [ spacing 20, height fill ]
+        [ row None
+            [ height <| fillPortion 1 ]
+            [ multiline TextField
+                [ height <| fill ]
+                { onChange = CiphertextChanged
+                , value = model.ciphertext
+                , label = labelAbove <| el Label [] <| Element.text "Ciphertext:"
+                , options = []
+                }
+            ]
+        , textLayout TextField
+            [ height <| fillPortion 1 ]
+            [ Element.text <| caesarCipher model.offset model.ciphertext
+            ]
         , range OffsetChanged model.offset
         ]
         |> mainContent Body [ height fill, padding 20, center ]
 
 
-range : (Int -> msg) -> Int -> Element style variation msg
+range : (Int -> msg) -> Int -> Element Styles variation msg
 range tag value =
-    html <|
-        Html.input
-            [ Html.Attributes.type_ "range"
-            , Html.Attributes.value (toString value)
-            , Html.Attributes.style
-                [ ( "box-sizing", "border-box" )
-                , ( "width", "100%" )
-                , ( "margin", "0" )
-                , ( "outline", "none" )
-                , ( "border-color", "rgba(155,203,255,1.0)" )
-                , ( "padding", "10px" )
-                , ( "pointer-events", "auto" )
+    el None [] <|
+        html <|
+            Html.input
+                [ Html.Attributes.type_ "range"
+                , Html.Attributes.value (toString value)
+                , Html.Attributes.style
+                    [ ( "box-sizing", "border-box" )
+                    , ( "width", "100%" )
+                    , ( "margin", "0" )
+                    , ( "outline", "none" )
+                    , ( "border-color", "rgba(155,203,255,1.0)" )
+                    , ( "pointer-events", "auto" )
+                    ]
+                , Html.Events.onInput
+                    (\text ->
+                        String.toInt text
+                            |> Result.withDefault value
+                            |> tag
+                    )
+                , Html.Attributes.attribute "min" "0"
+                , Html.Attributes.attribute "max" "26"
                 ]
-            , Html.Events.onInput
-                (\text ->
-                    String.toInt text
-                        |> Result.withDefault value
-                        |> tag
-                )
-            , Html.Attributes.attribute "min" "0"
-            , Html.Attributes.attribute "max" "26"
-            ]
-            []
+                []
 
 
 
