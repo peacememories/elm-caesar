@@ -78,6 +78,7 @@ type Styles
     | Page
     | TextField
     | Label
+    | Background
 
 
 globalSheet : StyleSheet Styles variation
@@ -104,6 +105,8 @@ globalSheet =
             , Font.size 20
             , Color.text darkCharcoal
             ]
+        , style Background
+            [ Color.background darkCharcoal ]
         ]
 
 
@@ -114,7 +117,7 @@ view model =
 
 mainLayout : Model -> Element Styles variation Msg
 mainLayout model =
-    column None
+    column Background
         [ height fill
         , width fill
         , center
