@@ -157,6 +157,7 @@ pageContent model =
             [ height <| fillPortion 1 ]
             [ multiline TextField
                 [ height <| fill
+                , width fill
                 , padding 10
                 ]
                 { onChange = CiphertextChanged
