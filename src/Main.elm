@@ -255,5 +255,5 @@ caesarCipher offset text =
 
 splitToParagraphs : String -> List (Element Styles variation msg)
 splitToParagraphs str =
-    String.split "\n" str
+    String.lines str
         |> List.map (Element.text >> List.singleton >> paragraph None [])
