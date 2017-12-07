@@ -99,6 +99,7 @@ globalSheet =
             , Color.text white
             , Font.typeface [ Font.sansSerif ]
             , Font.size 20
+            , prop "overflow-wrap" "break-word"
             ]
         , style Label
             [ Font.typeface [ Font.sansSerif ]
