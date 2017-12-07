@@ -156,19 +156,29 @@ pageContent model =
         [ row None
             [ height <| fillPortion 1 ]
             [ multiline TextField
-                [ height <| fill ]
+                [ height <| fill
+                , padding 10
+                ]
                 { onChange = CiphertextChanged
                 , value = model.ciphertext
-                , label = labelAbove <| el Label [] <| Element.text "Ciphertext:"
+                , label =
+                    placeholder
+                        { text = "Ciphertext"
+                        , label = hiddenLabel "Ciphertext"
+                        }
                 , options = []
                 }
             ]
         , textLayout TextField
             [ height <| fillPortion 1
+            , padding 10
             , yScrollbar
             ]
-            [ Element.text <| caesarCipher model.offset model.ciphertext
-            ]
+            (splitToParagraphs <|
+                caesarCipher
+                    model.offset
+                    model.ciphertext
+            )
         , row None
             [ spacing 10 ]
             [ Element.text (toString model.offset)
@@ -241,3 +251,9 @@ caesarCipher offset text =
     String.toList text
         |> List.map (encryptChar offset)
         |> String.fromList
+
+
+splitToParagraphs : String -> List (Element Styles variation msg)
+splitToParagraphs str =
+    String.split "\n" str
+        |> List.map (Element.text >> List.singleton >> paragraph None [])
