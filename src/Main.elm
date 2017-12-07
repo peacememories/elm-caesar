@@ -164,7 +164,9 @@ pageContent model =
                 }
             ]
         , textLayout TextField
-            [ height <| fillPortion 1 ]
+            [ height <| fillPortion 1
+            , yScrollbar
+            ]
             [ Element.text <| caesarCipher model.offset model.ciphertext
             ]
         , row None
