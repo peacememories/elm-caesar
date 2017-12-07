@@ -114,10 +114,21 @@ view model =
 
 mainLayout : Model -> Element Styles variation Msg
 mainLayout model =
-    column Page
-        [ height fill ]
-        [ pageHeader
-        , pageContent model
+    column None
+        [ height fill
+        , width fill
+        , center
+        , verticalCenter
+        ]
+        [ column Page
+            [ height fill
+            , width fill
+            , maxWidth <| px 500
+            , maxHeight <| px 800
+            ]
+            [ pageHeader
+            , pageContent model
+            ]
         ]
 
 
