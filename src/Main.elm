@@ -154,42 +154,51 @@ pageContent : Model -> Element Styles variation Msg
 pageContent model =
     column None
         [ spacing 20, height fill ]
-        [ row None
-            [ height <| fillPortion 1 ]
-            [ multiline TextField
-                [ height <| fill
-                , width fill
-                , padding 10
-                ]
-                { onChange = CiphertextChanged
-                , value = model.ciphertext
-                , label =
-                    placeholder
-                        { text = "Ciphertext"
-                        , label = hiddenLabel "Ciphertext"
-                        }
-                , options = []
-                }
-            ]
-        , textLayout TextField
+        [ textInput "Ciphertext" CiphertextChanged model.ciphertext
+        , paragraphs TextField
             [ height <| fillPortion 1
             , padding 10
             , yScrollbar
             ]
-            (splitToParagraphs <|
-                caesarCipher
-                    model.offset
-                    model.ciphertext
+            (caesarCipher
+                model.offset
+                model.ciphertext
             )
-        , row None
-            [ spacing 10 ]
-            [ Element.text (toString model.offset)
-                |> el None [ alignRight ]
-                |> el Label [ minWidth <| px 30 ]
-            , range None [ width fill ] OffsetChanged model.offset
-            ]
+        , rangeInput OffsetChanged model.offset
         ]
         |> mainContent Body [ height fill, padding 20, center ]
+
+
+textInput : String -> (String -> msg) -> String -> Element Styles variation msg
+textInput label_ tag value =
+    row None
+        [ height <| fillPortion 1 ]
+        [ multiline TextField
+            [ height <| fill
+            , width fill
+            , padding 10
+            ]
+            { onChange = tag
+            , value = value
+            , label =
+                placeholder
+                    { text = label_
+                    , label = hiddenLabel label_
+                    }
+            , options = []
+            }
+        ]
+
+
+rangeInput : (Int -> msg) -> Int -> Element Styles variation msg
+rangeInput tag value =
+    row None
+        [ spacing 10 ]
+        [ Element.text (toString value)
+            |> el None [ alignRight ]
+            |> el Label [ minWidth <| px 30 ]
+        , range None [ width fill ] tag value
+        ]
 
 
 range : style -> List (Element.Attribute variation msg) -> (Int -> msg) -> Int -> Element style variation msg
@@ -218,6 +227,13 @@ range style attrs tag value =
                 , Html.Attributes.attribute "max" "25"
                 ]
                 []
+
+
+paragraphs : style -> List (Element.Attribute variation msg) -> String -> Element style variation msg
+paragraphs style attrs str =
+    String.lines str
+        |> List.map (Element.text >> List.singleton >> paragraph style [])
+        |> textLayout style attrs
 
 
 
@@ -253,9 +269,3 @@ caesarCipher offset text =
     String.toList text
         |> List.map (encryptChar offset)
         |> String.fromList
-
-
-splitToParagraphs : String -> List (Element Styles variation msg)
-splitToParagraphs str =
-    String.lines str
-        |> List.map (Element.text >> List.singleton >> paragraph None [])
