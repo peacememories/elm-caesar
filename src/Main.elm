@@ -3,13 +3,12 @@ module Main exposing (main)
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
+import Window
 import Element exposing (..)
-import Element.Input exposing (..)
-import Element.Attributes exposing (..)
+import Element.Input as Input
+import Element.Background as Background
+import Element.Font as Font
 import Color exposing (..)
-import Style exposing (..)
-import Style.Color as Color
-import Style.Font as Font
 import String
 import Char
 
@@ -33,11 +32,13 @@ type Msg
     = CiphertextChanged String
     | OffsetChanged Int
     | DoNothing
+    | WindowSizeChanged Window.Size
 
 
 type alias Model =
     { ciphertext : String
     , offset : Int
+    , windowSize : Window.Size
     }
 
 
@@ -54,6 +55,11 @@ update msg model =
                 | ciphertext = ciphertext
             }
 
+        WindowSizeChanged windowSize ->
+            { model
+                | windowSize = windowSize
+            }
+
         DoNothing ->
             model
 
@@ -62,6 +68,10 @@ initModel : Model
 initModel =
     { ciphertext = ""
     , offset = 0
+    , windowSize =
+        { width = 0
+        , height = 0
+        }
     }
 
 
@@ -71,139 +81,53 @@ initModel =
 --
 
 
-type Styles
-    = None
-    | Header
-    | Body
-    | Page
-    | TextField
-    | Label
-    | Background
-
-
-globalSheet : StyleSheet Styles variation
-globalSheet =
-    styleSheet
-        [ style None []
-        , style Header
-            [ Color.background darkCharcoal
-            , Color.text white
-            , Font.typeface [ Font.sansSerif ]
-            , Font.size 40
-            ]
-        , style Page
-            [ Color.background darkGray
-            ]
-        , style TextField
-            [ Color.background darkCharcoal
-            , Color.text white
-            , Font.typeface [ Font.sansSerif ]
-            , Font.size 20
-            , prop "overflow-wrap" "break-word"
-            ]
-        , style Label
-            [ Font.typeface [ Font.sansSerif ]
-            , Font.size 20
-            , Color.text darkCharcoal
-            ]
-        , style Background
-            [ Color.background darkCharcoal ]
-        ]
-
-
 view : Model -> Html Msg
 view model =
-    viewport globalSheet (mainLayout model)
-
-
-mainLayout : Model -> Element Styles variation Msg
-mainLayout model =
-    column Background
-        [ height fill
-        , width fill
-        , center
-        , verticalCenter
-        ]
-        [ column Page
-            [ height fill
+    layout [] <|
+        -- Page Background
+        el
+            [ Background.color darkCharcoal
             , width fill
-            , maxWidth <| px 500
-            , maxHeight <| px 800
+            , height fill
             ]
-            [ pageHeader
-            , pageContent model
-            ]
-        ]
-
-
-pageHeader : Element Styles variation msg
-pageHeader =
-    row None
-        [ center
-        , width fill
-        , verticalCenter
-        , height (px 60)
-        ]
-        [ Element.text "Caesar Cipher"
-            |> h1 None []
-        ]
-        |> header Header []
-
-
-pageContent : Model -> Element Styles variation Msg
-pageContent model =
-    column None
-        [ spacing 20, height fill ]
-        [ textInput "Ciphertext" CiphertextChanged model.ciphertext
-        , paragraphs TextField
-            [ height <| fillPortion 1
-            , padding 10
-            , yScrollbar
-            ]
-            (caesarCipher
-                model.offset
-                model.ciphertext
-            )
-        , rangeInput OffsetChanged model.offset
-        ]
-        |> mainContent Body [ height fill, padding 20, center ]
-
-
-textInput : String -> (String -> msg) -> String -> Element Styles variation msg
-textInput label_ tag value =
-    row None
-        [ height <| fillPortion 1 ]
-        [ multiline TextField
-            [ height <| fill
-            , width fill
-            , padding 10
-            ]
-            { onChange = tag
-            , value = value
-            , label =
-                placeholder
-                    { text = label_
-                    , label = hiddenLabel label_
+        <|
+            -- Main Layout
+            column
+                [ width (px 400)
+                , height (px 600)
+                ]
+                [ el
+                    [ Font.size 32
+                    , Font.center
+                    , padding 5
+                    , Font.color darkCharcoal
+                    , Background.color darkGray
+                    , width fill
+                    ]
+                    (text "Caesar Cipher")
+                , Input.multiline
+                    [ Background.color darkCharcoal
+                    , Font.color darkGray
+                    ]
+                    { onChange = Just CiphertextChanged
+                    , text = model.ciphertext
+                    , placeholder =
+                        Just
+                            (Input.placeholder
+                                [ Font.color lightCharcoal
+                                ]
+                             <|
+                                text "Ciphertext"
+                            )
+                    , label = Input.labelBelow [ hidden True ] <| text "Ciphertexts"
+                    , notice = Nothing
                     }
-            , options = []
-            }
-        ]
+                ]
 
 
-rangeInput : (Int -> msg) -> Int -> Element Styles variation msg
-rangeInput tag value =
-    row None
-        [ spacing 10 ]
-        [ Element.text (toString value)
-            |> el None [ alignRight ]
-            |> el Label [ minWidth <| px 30 ]
-        , range None [ width fill ] tag value
-        ]
-
-
-range : style -> List (Element.Attribute variation msg) -> (Int -> msg) -> Int -> Element style variation msg
-range style attrs tag value =
-    el style attrs <|
+range : List (Attribute msg) -> (Int -> msg) -> Int -> Element msg
+range attrs tag value =
+    el attrs <|
         html <|
             Html.input
                 [ Html.Attributes.type_ "range"
@@ -229,11 +153,11 @@ range style attrs tag value =
                 []
 
 
-paragraphs : style -> List (Element.Attribute variation msg) -> String -> Element style variation msg
-paragraphs style attrs str =
+paragraphs : List (Attribute msg) -> String -> Element msg
+paragraphs attrs str =
     String.lines str
-        |> List.map (Element.text >> List.singleton >> paragraph style [])
-        |> textLayout style attrs
+        |> List.map (Element.text >> List.singleton >> paragraph [])
+        |> textColumn attrs
 
 
 
